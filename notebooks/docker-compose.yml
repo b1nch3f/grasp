@@ -1,0 +1,17 @@
+version: '3'
+services:
+  cuda_container:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: -1
+              capabilities: [gpu]
+    volumes:
+      - .:/home
+    ports:
+      - 8888:8888

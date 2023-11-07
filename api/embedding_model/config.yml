@@ -1,0 +1,2 @@
+package_name: embedding_model
+embedding_size: 500
