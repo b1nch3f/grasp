@@ -1,6 +1,9 @@
 # docs
 *.bkp
 
+# model files
+*.pkl
+
 # data
 data
 
