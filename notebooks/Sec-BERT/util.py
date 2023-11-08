@@ -10,6 +10,8 @@ import zipfile
 import requests
 import torch
 from torch import nn
+import pandas as pd
+
 from dataset import WikiTextDataset
 
 
@@ -96,7 +98,7 @@ def download_extract(name, folder=None):
     return os.path.join(base_dir, folder) if folder else data_dir
 
 
-def _read_wiki(data_dir):
+def read_wiki(data_dir):
     """Defined in :numref:`sec_bert-dataset`"""
     file_name = os.path.join(data_dir, 'wiki.train.tokens')
     with open(file_name, 'r') as f:
@@ -108,13 +110,53 @@ def _read_wiki(data_dir):
     return paragraphs
 
 
+def read_csic():
+    df = pd.read_csv('../data/csic_database.csv')
+
+    # drop rows with missing content
+    df.dropna(subset=['content'], inplace=True)
+
+    # select required columns
+    payload_df = df.iloc[:,[0, 14]]
+
+    # set column names
+    payload_df.columns = ['Type', 'Content']
+
+    payloads = []
+
+    for row in payload_df.iloc[:10,:].itertuples(index=False):
+        # print(row[0], row[1])
+        type = row[0]
+        payload = row[1]
+
+        if len(payload.split('&')) >= 2:
+            # print(row[0], row[1])
+            # print(row[0], row[1].strip().lower().split('&'))
+            payloads.append(row[1].strip().lower().split('&'))
+
+    random.shuffle(payloads)
+    return payloads
+
+
+def load_csic_data(batch_size, max_len):
+    """Load the csic dataset.
+
+    Defined in :numref:`subsec_prepare_mlm_data`"""
+    num_workers = get_dataloader_workers()
+    payloads = read_csic()
+    train_set = WikiTextDataset(payloads, max_len)
+    train_iter = torch.utils.data.DataLoader(train_set, batch_size,
+                                        shuffle=True, num_workers=num_workers)
+    return train_iter, train_set.vocab
+
+
 def load_data_wiki(batch_size, max_len):
     """Load the WikiText-2 dataset.
 
     Defined in :numref:`subsec_prepare_mlm_data`"""
     num_workers = get_dataloader_workers()
     data_dir = download_extract('wikitext-2', 'wikitext-2')
-    paragraphs = _read_wiki(data_dir)
+    paragraphs = read_wiki(data_dir)
     train_set = WikiTextDataset(paragraphs, max_len)
     train_iter = torch.utils.data.DataLoader(train_set, batch_size,
                                         shuffle=True, num_workers=num_workers)
