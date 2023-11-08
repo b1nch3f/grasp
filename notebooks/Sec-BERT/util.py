@@ -1,23 +1,10 @@
-DATA_HUB = dict()
-DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
-
-import hashlib
-import os
 import random
-import tarfile
-import zipfile
 
-import requests
 import torch
 from torch import nn
 import pandas as pd
 
-from dataset import WikiTextDataset
-
-
-DATA_HUB['wikitext-2'] = (
-    'https://s3.amazonaws.com/research.metamind.io/wikitext/'
-    'wikitext-2-v1.zip', '3c914d17d80b1459be871a5039ac23e752a53cbe')
+from dataset import CSICDataset
 
 
 def masked_softmax(X, valid_lens):
@@ -51,63 +38,6 @@ def get_dataloader_workers():
 
     Defined in :numref:`sec_utils`"""
     return 4
-
-
-def download(url, folder='../data', sha1_hash=None):
-    """Download a file to folder and return the local filepath.
-
-    Defined in :numref:`sec_utils`"""
-    if not url.startswith('http'):
-        # For back compatability
-        url, sha1_hash = DATA_HUB[url]
-    os.makedirs(folder, exist_ok=True)
-    fname = os.path.join(folder, url.split('/')[-1])
-    # Check if hit cache
-    if os.path.exists(fname) and sha1_hash:
-        sha1 = hashlib.sha1()
-        with open(fname, 'rb') as f:
-            while True:
-                data = f.read(1048576)
-                if not data:
-                    break
-                sha1.update(data)
-        if sha1.hexdigest() == sha1_hash:
-            return fname
-    # Download
-    print(f'Downloading {fname} from {url}...')
-    r = requests.get(url, stream=True, verify=True)
-    with open(fname, 'wb') as f:
-        f.write(r.content)
-    return fname
-
-
-def download_extract(name, folder=None):
-    """Download and extract a zip/tar file.
-
-    Defined in :numref:`sec_utils`"""
-    fname = download(name)
-    base_dir = os.path.dirname(fname)
-    data_dir, ext = os.path.splitext(fname)
-    if ext == '.zip':
-        fp = zipfile.ZipFile(fname, 'r')
-    elif ext in ('.tar', '.gz'):
-        fp = tarfile.open(fname, 'r')
-    else:
-        assert False, 'Only zip/tar files can be extracted.'
-    fp.extractall(base_dir)
-    return os.path.join(base_dir, folder) if folder else data_dir
-
-
-def read_wiki(data_dir):
-    """Defined in :numref:`sec_bert-dataset`"""
-    file_name = os.path.join(data_dir, 'wiki.train.tokens')
-    with open(file_name, 'r') as f:
-        lines = f.readlines()
-    # Uppercase letters are converted to lowercase ones
-    paragraphs = [line.strip().lower().split(' . ')
-                  for line in lines if len(line.split(' . ')) >= 2]
-    random.shuffle(paragraphs)
-    return paragraphs
 
 
 def read_csic():
@@ -144,20 +74,7 @@ def load_csic_data(batch_size, max_len):
     Defined in :numref:`subsec_prepare_mlm_data`"""
     num_workers = get_dataloader_workers()
     payloads = read_csic()
-    train_set = WikiTextDataset(payloads, max_len)
-    train_iter = torch.utils.data.DataLoader(train_set, batch_size,
-                                        shuffle=True, num_workers=num_workers)
-    return train_iter, train_set.vocab
-
-
-def load_data_wiki(batch_size, max_len):
-    """Load the WikiText-2 dataset.
-
-    Defined in :numref:`subsec_prepare_mlm_data`"""
-    num_workers = get_dataloader_workers()
-    data_dir = download_extract('wikitext-2', 'wikitext-2')
-    paragraphs = read_wiki(data_dir)
-    train_set = WikiTextDataset(paragraphs, max_len)
+    train_set = CSICDataset(payloads, max_len)
     train_iter = torch.utils.data.DataLoader(train_set, batch_size,
                                         shuffle=True, num_workers=num_workers)
     return train_iter, train_set.vocab

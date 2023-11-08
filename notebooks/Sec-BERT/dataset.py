@@ -134,7 +134,7 @@ def _pad_bert_inputs(examples, max_len, vocab):
 
 
 
-class WikiTextDataset(torch.utils.data.Dataset):
+class CSICDataset(torch.utils.data.Dataset):
     """Defined in :numref:`subsec_prepare_mlm_data`"""
     def __init__(self, paragraphs, max_len):
         # Input `paragraphs[i]` is a list of sentence strings representing a
