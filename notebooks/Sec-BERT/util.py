@@ -54,14 +54,11 @@ def read_csic():
 
     payloads = []
 
-    for row in payload_df.iloc[:10,:].itertuples(index=False):
-        # print(row[0], row[1])
-        type = row[0]
+    for row in payload_df.itertuples(index=False):
+        # type = row[0]
         payload = row[1]
 
         if len(payload.split('&')) >= 2:
-            # print(row[0], row[1])
-            # print(row[0], row[1].strip().lower().split('&'))
             payloads.append(row[1].strip().lower().split('&'))
 
     random.shuffle(payloads)
