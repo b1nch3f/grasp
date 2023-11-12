@@ -4,6 +4,9 @@
 # model files
 *.pkl
 
+# data
+*.csv
+
 # scratchpad
 scratchpad.ipynb
 
