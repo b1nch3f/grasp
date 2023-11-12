@@ -60,9 +60,11 @@ def read_csic():
 
         if len(payload.split('&')) >= 2:
             query_params = row[1].strip().lower().split('&')
+            params_store = []
             for query_param in query_params:
                 parts = query_param.split('=')
-                payloads.append(parts)
+                params_store.append(' '.join(parts))
+            payloads.append(params_store)
 
     random.shuffle(payloads)
     return payloads
